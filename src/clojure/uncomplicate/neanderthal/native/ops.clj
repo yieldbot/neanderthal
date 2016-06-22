@@ -10,9 +10,17 @@
 
 (defmulti sub! (fn [a1 a2] [(mtype a1) (mtype a2)]))
 
+(defmulti mul! (fn [a1 a2] [(mtype a1) (mtype a2)]))
+
+(defmulti div! (fn [a1 a2] [(mtype a1) (mtype a2)]))
+
 (defmulti add (fn [a1 a2] [(mtype a1) (mtype a2)]))
 
 (defmulti sub (fn [a1 a2] [(mtype a1) (mtype a2)]))
+
+(defmulti mul (fn [a1 a2] [(mtype a1) (mtype a2)]))
+
+(defmulti div (fn [a1 a2] [(mtype a1) (mtype a2)]))
 
 (defmethod add! [:vector :scalar] [v a]
   (let [f (fn ^double [^double x] (+ x a))]
@@ -57,6 +65,52 @@
 
 (defmethod sub [:vector :vector] [v1 v2]
   (sub! (c/copy v1) v2))
+
+(defmethod mul! [:vector :scalar] [v a]
+  (let [f (fn ^double [^double x] (* x a))]
+    (fmap! f v)
+    v))
+
+(defmethod mul! [:scalar :vector] [a v]
+  (mul! v a))
+
+(defmethod mul! [:vector :vector] [v1 v2]
+  (let [f (fn ^double [^double x ^double y] (* x y))]
+    (fmap! f v1 v2)
+    v1))
+
+(defmethod div! [:vector :scalar] [v a]
+  (let [f (fn ^double [^double x] (/ x a))]
+    (fmap! f v)
+    v))
+
+(defmethod div! [:scalar :vector] [a v]
+  (let [f (fn ^double [^double x] (/ a x))]
+    (fmap! f v)
+    v))
+
+(defmethod div! [:vector :vector] [v1 v2]
+  (let [f (fn ^double [^double x ^double y] (/ x y))]
+    (fmap! f v1 v2)
+    v1))
+
+(defmethod mul [:vector :scalar] [v a]
+  (mul! (c/copy v) a))
+
+(defmethod mul [:scalar :vector] [a v]
+  (mul! (c/copy v) a))
+
+(defmethod mul [:vector :vector] [v1 v2]
+  (mul! (c/copy v1) v2))
+
+(defmethod div [:vector :scalar] [v a]
+  (div! (c/copy v) a))
+
+(defmethod div [:scalar :vector] [a v]
+  (div! a (c/copy v)))
+
+(defmethod div [:vector :vector] [v1 v2]
+  (div! (c/copy v1) v2))
 
 (defn mean
   "Mean of entries in v."
