@@ -1,4 +1,4 @@
-(defproject uncomplicate/neanderthal "0.7.0-SNAPSHOT"
+(defproject uncomplicate/neanderthal "0.6.3-SNAPSHOT"
   :description "Neanderthal is a Clojure library for fast matrix and linear algebra computations."
   :url "https://github.com/uncomplicate/neanderthal"
   :scm {:name "git"
@@ -9,7 +9,7 @@
                  [uncomplicate/commons "0.2.0"]
                  [uncomplicate/fluokitten "0.5.0"]
                  [uncomplicate/clojurecl "0.6.4"]
-                 [uncomplicate/neanderthal-native "0.5.0"]
+                 [uncomplicate/neanderthal-native "0.5.1-SNAPSHOT"]
                  [org.jocl/jocl-blast "0.7.1"]
                  [org.apache.commons/commons-math3 "3.6.1"]
                  [vertigo "0.1.4"]]
@@ -34,6 +34,7 @@
 
   :profiles {:dev {:plugins [[lein-midje "3.1.3"]
                              [lein-codox "0.9.4"]]
+                   :source-paths ["dev/clojure"]
                    :global-vars {*warn-on-reflection* true
                                  *assert* false
                                  *unchecked-math* :warn-on-boxed
