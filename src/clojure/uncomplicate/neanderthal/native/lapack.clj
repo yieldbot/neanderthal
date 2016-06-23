@@ -19,9 +19,9 @@
     (assert (#{\A \S \N \O} jobu))
     (assert (#{\A \S \N \O} jobvt))
     ;; M >= 0.
-    (assert (> m 0))
+    (assert (pos? m))
     ;; N >= 0.
-    (assert (> n 0))
+    (assert (pos? n))
     ;; A is DOUBLE PRECISION array, dimension (LDA,N)
     (assert (= (c/ncols a) n))
     ;; LDA >= max(1,M).
@@ -108,9 +108,9 @@
      (assert (#{\A \S \O \N} jobu))
      (assert (#{\A \S \O \N} jobvt))
      ;; M >= 0.
-     (assert (> m 0))
+     (assert (pos? m))
      ;; N >= 0.
-     (assert (> n 0))
+     (assert (pos? n))
      ;; A is DOUBLE PRECISION array, dimension (LDA,N)
      (assert (= (c/ncols a) n))
      ;; LDA >= max(1,M).
