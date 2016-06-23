@@ -3,7 +3,7 @@
             [uncomplicate.neanderthal.native :as n]
             [uncomplicate.neanderthal.native.ops :refer :all]
             [uncomplicate.neanderthal.native.util :refer :all]
-            [uncomplicate.neanderthal.native.svd :refer [svd]]
+            [uncomplicate.neanderthal.native.lapack :refer [svd]]
             [uncomplicate.fluokitten.core :refer [fmap]]))
 
 ;; see https://github.com/scikit-learn/scikit-learn/blob/0.17.1/sklearn/decomposition/pca.py
@@ -21,8 +21,6 @@
         m (c/mrows X)
         n (c/ncols X)
         {:keys [s u vt]} (svd Y)
-        ;; TODO: use sparse SVD instead of truncating the result
-        vt (c/submatrix vt (min m n) n)
         explained-variance (fmap (fn ^double [^double x]
                                    (/ 1.0 (Math/sqrt (/ (* x x) m)))
                                    #_(/ (* x x) m))
