@@ -55,19 +55,25 @@
     ;; matrices must be column-oriented
     (assert (every? #(= (order %) COLUMN_MAJOR) [a u vt work])
             "Matrices must have COLUMN_MAJOR order")
-    (LAPACK/dgesdd_ jobz
-                    m
-                    n
-                    (buffer a)
-                    lda
-                    (buffer s)
-                    (buffer u)
-                    ldu
-                    (buffer vt)
-                    ldvt
-                    (buffer work)
-                    lwork
-                    (buffer iwork))))
+    (let [info (LAPACK/dgesdd_ jobz
+                               m
+                               n
+                               (buffer a)
+                               lda
+                               (buffer s)
+                               (buffer u)
+                               ldu
+                               (buffer vt)
+                               ldvt
+                               (buffer work)
+                               lwork
+                               (buffer iwork))]
+      (cond
+        (pos? info) (throw (RuntimeException.
+                            "Algorithm failed to converge"))
+        (neg? info) (throw (RuntimeException.
+                            "Unexpected error due to invalid LAPACK argument"))
+        :else info))))
 
 (defn dgesdd-query [jobz m n ^Block a ^Block s ^Block u ^Block vt ^Block iwork]
   (let [work0 (n/dv 1)]
@@ -139,19 +145,25 @@
      ;; matrices must be column-oriented
      (assert (every? #(= (order %) COLUMN_MAJOR) [a u vt work])
              "Matrices must have COLUMN_MAJOR order")
-     (LAPACK/dgesvd_ jobu
-                     jobvt
-                     m
-                     n
-                     (buffer a)
-                     lda
-                     (buffer s)
-                     (buffer u)
-                     ldu
-                     (buffer vt)
-                     ldvt
-                     (buffer work)
-                     lwork)))
+     (let [info (LAPACK/dgesvd_ jobu
+                                jobvt
+                                m
+                                n
+                                (buffer a)
+                                lda
+                                (buffer s)
+                                (buffer u)
+                                ldu
+                                (buffer vt)
+                                ldvt
+                                (buffer work)
+                                lwork)]
+       (cond
+         (pos? info) (throw (RuntimeException.
+                             "Algorithm failed to converge"))
+         (neg? info) (throw (RuntimeException.
+                             "Unexpected error due to invalid LAPACK argument"))
+         :else info))))
 
 (defn dgesvd-query
   [jobu jobvt m n ^Block a ^Block s ^Block u ^Block vt]
