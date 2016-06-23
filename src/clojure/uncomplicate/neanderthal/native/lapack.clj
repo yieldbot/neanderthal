@@ -11,6 +11,12 @@
 
 ;;;;; Low-level LAPACK Routines ;;;;;
 
+(defn argcheck
+  ([cond]
+   (when (not cond) (throw (IllegalArgumentException.))))
+  ([cond msg]
+   (when (not cond) (throw (IllegalArgumentException. msg)))))
+
 (defn -dgesdd
   ;; NOTE: lwork must be an explicit parameter so we can pass -1 to query for
   ;; work size.
@@ -18,44 +24,43 @@
   (let [lda (c/mrows a)
         ldu (c/mrows u)
         ldvt (c/mrows vt)]
-    (assert (#{\A \S \N \O} jobu))
-    (assert (#{\A \S \N \O} jobvt))
+    (argcheck (#{\A \S \N \O} jobz))
     ;; M >= 0.
-    (assert (pos? m))
+    (argcheck (>= m 0))
     ;; N >= 0.
-    (assert (pos? n))
+    (argcheck (>= n 0))
     ;; A is DOUBLE PRECISION array, dimension (LDA,N)
-    (assert (= (c/ncols a) n))
+    (argcheck (= (c/ncols a) n))
     ;; LDA >= max(1,M).
-    (assert (>= lda (max 1 m)))
+    (argcheck (>= lda (max 1 m)))
     ;; S is DOUBLE PRECISION array, dimension (min(M,N))
-    (assert (= (c/dim s) (min m n)))
+    (argcheck (= (c/dim s) (min m n)))
     ;; U is DOUBLE PRECISION array, dimension (LDU,UCOL)
     ;; UCOL = M if JOBZ = 'A' or JOBZ = 'O' and M < N;
     ;; UCOL = min(M,N) if JOBZ = 'S'.
     ;; if JOBU = 'N' or 'O', U is not referenced.
     (let [ucol (c/ncols u)]
       (case jobz
-        \A (assert (= ucol m))
-        \S (assert (= ucol (min m n)))
+        \A (argcheck (= ucol m))
+        \S (argcheck (= ucol (min m n)))
         nil))
     ;; LDU >= 1; if JOBZ = 'S' or 'A' or JOBZ = 'O' and M < N, LDU >= M.
     (if (or (= jobz \A) (= jobz \S) (and (= jobz \O) (< m n)))
-      (assert (>= ldu m))
-      (assert (>= ldu 1)))
+      (argcheck (>= ldu m))
+      (argcheck (>= ldu 1)))
     ;; VT is DOUBLE PRECISION array, dimension (LDVT,N)
-    (assert (= (c/ncols vt) n))
+    (argcheck (= (c/ncols vt) n))
     ;; LDVT >= 1; if JOBZ = 'A' or JOBZ = 'O' and M >= N, LDVT >= N;
     ;; if JOBZ = 'S', LDVT >= min(M,N).
     (case jobz
-      \A (assert (= ldvt n))
-      \S (assert (= ldvt (min m n)))
-      \O (assert (or (< m n) (< n ldvt)))
+      \A (argcheck (= ldvt n))
+      \S (argcheck (= ldvt (min m n)))
+      \O (argcheck (or (< m n) (< n ldvt)))
       nil)
     ;; IWORK is INTEGER array, dimension (8*min(M,N))
-    (assert (>= (c/dim iwork) (* 8 (min m n))))
+    (argcheck (>= (c/dim iwork) (* 8 (min m n))))
     ;; matrices must be column-oriented
-    (assert (every? #(= (order %) COLUMN_MAJOR) [a u vt work])
+    (argcheck (every? #(= (order %) COLUMN_MAJOR) [a u vt])
             "Matrices must have COLUMN_MAJOR order")
     (let [info (LAPACK/dgesdd_ jobz
                                m
@@ -113,39 +118,39 @@
    (let [lda (c/mrows a)
          ldu (c/mrows u)
          ldvt (c/mrows vt)]
-     (assert (#{\A \S \O \N} jobu))
-     (assert (#{\A \S \O \N} jobvt))
+     (argcheck (#{\A \S \O \N} jobu))
+     (argcheck (#{\A \S \O \N} jobvt))
      ;; M >= 0.
-     (assert (pos? m))
+     (argcheck (>= m 0))
      ;; N >= 0.
-     (assert (pos? n))
+     (argcheck (>= n 0))
      ;; A is DOUBLE PRECISION array, dimension (LDA,N)
-     (assert (= (c/ncols a) n))
+     (argcheck (= (c/ncols a) n))
      ;; LDA >= max(1,M).
-     (assert (>= lda (max 1 m)))
+     (argcheck (>= lda (max 1 m)))
      ;; S is DOUBLE PRECISION array, dimension (min(M,N))
-     (assert (= (c/dim s) (min m n)))
+     (argcheck (= (c/dim s) (min m n)))
      ;; U is DOUBLE PRECISION array, dimension (LDU,UCOL)
      ;; (LDU,M) if JOBU = 'A' or (LDU,min(M,N)) if JOBU = 'S'.
      ;; if JOBU = 'N' or 'O', U is not referenced.
      (let [ucol (c/ncols u)]
        (case jobu
-         \A (assert (= ucol m))
-         \S (assert (= ucol (min m n)))
+         \A (argcheck (= ucol m))
+         \S (argcheck (= ucol (min m n)))
          nil))
      ;; LDU >= 1; if JOBU = 'S' or 'A', LDU >= M.
      (if (#{\A \S} jobu)
-       (assert (>= ldu m))
-       (assert (>= ldu 1)))
+       (argcheck (>= ldu m))
+       (argcheck (>= ldu 1)))
      ;; VT is DOUBLE PRECISION array, dimension (LDVT,N)
-     (assert (= (c/ncols vt) n))
+     (argcheck (= (c/ncols vt) n))
      ;;  LDVT >= 1; if JOBVT = 'A', LDVT >= N; if JOBVT = 'S', LDVT >= min(M,N).
      (case jobvt
-       \A (assert (= ldvt n))
-       \S (assert (= ldvt (min m n)))
+       \A (argcheck (= ldvt n))
+       \S (argcheck (= ldvt (min m n)))
        nil)
      ;; matrices must be column-oriented
-     (assert (every? #(= (order %) COLUMN_MAJOR) [a u vt work])
+     (argcheck (every? #(= (order %) COLUMN_MAJOR) [a u vt])
              "Matrices must have COLUMN_MAJOR order")
      (let [info (LAPACK/dgesvd_ jobu
                                 jobvt
@@ -202,22 +207,22 @@
    (let [lda (c/mrows a)
          ldb (c/mrows b)]
      ;; M >= 0.
-     (assert (pos? m 0))
+     (argcheck (>= m 0))
      ;; N >= 0.
-     (assert (pos? n 0))
+     (argcheck (>= n 0))
      ;; NRHS >= 0.
-     (assert (pos? nrhs))
+     (argcheck (>= nrhs))
      ;; A is DOUBLE PRECISION array, dimension (LDA,N)
-     (assert (= (c/ncols a) n))
+     (argcheck (= (c/ncols a) n))
      ;; LDA >= max(1,M)
-     (assert (>= lda (max m 1)))
+     (argcheck (>= lda (max m 1)))
      ;; B is DOUBLE PRECISION array, dimension (LDB,NRHS)
-     (assert (= (c/ncols b) nrhs))
+     (argcheck (= (c/ncols b) nrhs))
      ;; LDB >= max(1,max(M,N))
-     (assert (>= ldb (max 1 m n)))
+     (argcheck (>= ldb (max 1 m n)))
      ;; S is DOUBLE PRECISION array, dimension (min(M,N))
-     (assert (= (c/dim s) (min m n)))
-     (assert (every? #(= (order %) COLUMN_MAJOR) [a b])
+     (argcheck (= (c/dim s) (min m n)))
+     (argcheck (every? #(= (order %) COLUMN_MAJOR) [a b])
              "Matrices must have COLUMN_MAJOR order")
      (let [info (LAPACK/dgelsd_ m
                                 n
