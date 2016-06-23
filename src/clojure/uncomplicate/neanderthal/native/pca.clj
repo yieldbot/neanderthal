@@ -1,7 +1,6 @@
 (ns uncomplicate.neanderthal.native.pca
   (:require [uncomplicate.neanderthal.core :as c]
-            [uncomplicate.neanderthal.native :as n]
-            [uncomplicate.neanderthal.native.ops :refer :all]
+            [uncomplicate.neanderthal.native.ops :refer [sub! div! mean]]
             [uncomplicate.neanderthal.native.util :refer :all]
             [uncomplicate.neanderthal.native.lapack :refer [svd]]
             [uncomplicate.fluokitten.core :refer [fmap]]))
@@ -12,19 +11,19 @@
   "Subtract mean of each column."
   [X mu]
   (let [Y (c/copy X)]
-    (doall (map #(sub! %1 %2) (c/cols Y) mu))
+    (doall (map sub! (c/cols Y) mu))
     Y))
 
-(defn fit [X & {:keys [whiten]}]
+(defn fit [X & {:keys [whiten num-components]}]
   (let [mu (map mean (c/cols X))
         Y (center X mu)
         m (c/mrows X)
         n (c/ncols X)
+        num-components (min (or num-components n) m n)
         {:keys [s u vt]} (svd Y)
-        explained-variance (fmap (fn ^double [^double x]
-                                   (/ 1.0 (Math/sqrt (/ (* x x) m)))
-                                   #_(/ (* x x) m))
-                                 s)]
+        s (c/subvector s 0 num-components)
+        vt (c/submatrix vt num-components (c/ncols vt))
+        explained-variance (fmap (fn ^double [^double x] (/ (* x x) m)) s)]
     {:mu mu
      :components vt
      :whiten whiten
@@ -35,6 +34,6 @@
         Y (center X mu)
         res (c/mm Y (c/trans components))]
     (when whiten
-      (doseq [row (c/rows res)]
-        (mul! row explained-variance)))
+      (let [ev (fmap (fn ^double [^double x] (Math/sqrt x)) explained-variance)]
+        (doall (map div! (c/rows res) (repeat ev)))))
     res))
