@@ -253,8 +253,22 @@
 
 (defn dgelsd
   ([m n nrhs a b s rcond work iwork]
-   (let [{:keys [rank]} (-dgelsd m n nrhs a b s rcond work (c/dim work) iwork)]
-     {:rank rank :x b :s s}))
+   (let [{:keys [rank]} (-dgelsd m n nrhs a b s rcond work (c/dim work) iwork)
+         ;; On exit, B is overwritten by the N-by-NRHS solution matrix X.
+         solutions (c/submatrix b n nrhs)
+         ;; If m >= n and RANK = n, the residual sum-of-squares for the
+         ;; solution in the i-th column is given by the sum of squares of
+         ;; elements n+1:m in that column.
+         residuals (when (and (>= m n) (= rank n))
+                     ;; take rows n through m-1
+                     (let [resids (c/submatrix b n 0 m nrhs)]
+                       ;; take sum of squares per column
+                       (map (fn [col] (reduce + (mapv #(* % %) col)))
+                            (c/cols resids))))]
+     {:rank rank
+      :s (c/subvector s 0 (min m n))
+      :x solutions
+      :residuals residuals}))
   ([m n nrhs a b s rcond]
    ;; IWORK is INTEGER array, dimension (MAX(1,LIWORK))
    ;; LIWORK >= max(1, 3 * MINMN * NLVL + 11 * MINMN),
