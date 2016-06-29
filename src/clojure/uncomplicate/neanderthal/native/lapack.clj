@@ -310,8 +310,10 @@
 (defn lstsq
   "Least-squares solution to linear system AX = B. If B is a matrix, this is
   equivalent to solving for each column independently. Result contains
-  {:s S :x X :rank r}, where r and S are the effective rank and singular values
-  of A.
+    {:s S :x X :rank r :residuals res}
+  where r and S are the effective rank and
+  singular values of A, X is the least-squares solution, and the residuals
+    res = XA - B.
 
   The effective rank of A is determined by treating as zero those singular
   values which are less than rcond times the largest singular value."
